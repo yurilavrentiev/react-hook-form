@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, Modal, Typography } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteIcon from "@mui/icons-material/Delete";
 import React from "react";
 import styles from "./Form.module.css";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -8,6 +8,9 @@ import { ControlledTextField } from "components/ControlledMui/ControledTextField
 import { ControlledSelect } from "components/ControlledMui/ControlledSelect";
 import { ControlledDatePicker } from "components/ControlledMui/ControlledDatePicker";
 import dayjs from "dayjs";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { GENDER_OPTIONS, SOCIAL_MEDIA_OPTIONS } from "constants/constants";
 
 export type FormValues = {
   login: string;
@@ -15,10 +18,50 @@ export type FormValues = {
   password: string;
   gender: string;
   birthDate: Date | null | string;
-  socialMedia: {label: string, url: string}[]
+  socialMedia: { label: string; url: string }[];
+};
+
+const SocialMediaSchema = z.array(
+  z.object({
+    label: z.string().min(1, {message: 'Please select social media name'}),
+    url: z.string().url({message: "Should be valid url link"})
+  })
+);
+
+const isLoginUnique = (login: string, users: FormValues[]) => {
+  return !users.some(user => user.login === login);
 }
+const DateOfBirthSchema = z.string().refine((value) => {
+  const today = new Date();
+  const birthDate = new Date(value);
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    return (age -1) > 18;
+  }
+  return age > 18;
+}, {message: "You must be at leat 18 years old"})
+
+const PasswordSchema = z.string()
+.min(5, {message: "Password should be at least 5 digits"})
+.regex(/[A-Z]/, {message: "Should be at least 1 digit in uppercase"})
+.regex(/[0-9]/, {message: "Should be at least 1 number"})
+
 
 export const Form = ({ open, handleClose, users, setUsers }: any) => {
+
+  const ValidationSchema = z.object({
+    login: z
+      .string()
+      .min(3, { message: "Login should be at least 3 digits" })
+      .max(20, { message: "Login should be less then 20 digits" })
+      .refine(login => isLoginUnique(login, users), {message: "User with this login already exist"}),
+    email: z.string().email({message: "Shoul be valid email address"}),
+    password: PasswordSchema,
+    gender: z.string().min(1, {message: "Please select gender"}),
+    birthDate: DateOfBirthSchema,
+    socialMedia: SocialMediaSchema,
+  });
 
   const { control, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: {
@@ -27,17 +70,17 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
       password: "",
       gender: "",
       birthDate: null,
-      socialMedia: [{label: "", url: ""}]
-    }
+      socialMedia: [{ label: "", url: "" }],
+    },
+    resolver: zodResolver(ValidationSchema),
   });
 
-  const { fields, append, remove} = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
-    name: 'socialMedia'
-  })
-
+    name: "socialMedia",
+  });
+  
   const onSubmit = (data: any) => {
-
     const preparedData = {
       login: data.login,
       email: data.email,
@@ -45,54 +88,31 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
       gender: data.gender,
       birthDate: dayjs(data.birthDate),
       socialMedia: [...data.socialMedia],
-    }
+    };
+    console.log("data", data);
+    console.log("preparedData", preparedData);
 
     const updatedUsers = [...users, preparedData];
 
     setUsers(updatedUsers);
     reset();
     handleClose();
-   };
+  };
 
-  const socialMediaOptions = [
-    {
-      id: 'youtube',
-      label: 'YouTube'
-    },
-    {
-      id: 'github',
-      label: 'GitHub'
-    },
-    {
-      id: 'linkedin',
-      label: 'LinkedIn'
-    },
-    {
-      id: 'instagram',
-      label: 'Instagram'
-    },
-    {
-      id: 'facebook',
-      label: 'Facebook'
-    },
-  ]
-
-  const genderOptions = [
-    {
-      id: "male",
-      label: "Male",
-    },
-    {
-      id: "female",
-      label: "Female",
-    },
-  ];
+  const onFormClose = () => {
+    reset();
+    handleClose();
+  }
 
   return (
     <Modal
-      sx={{ display: "flex", justifyContent: "center", alignItems: "center", overflow: 'auto', maxHeight: '600px'}}
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
       open={open}
-      onClose={handleClose}
+      onClose={onFormClose}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
     >
@@ -100,7 +120,7 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
         <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
           <IconButton
             sx={{ position: "absolute", top: 0, right: 0 }}
-            onClick={handleClose}
+            onClick={onFormClose}
             aria-label="close"
           >
             <Close />
@@ -142,7 +162,7 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
               size="small"
               control={control}
               fullWidth={true}
-              options={genderOptions}
+              options={GENDER_OPTIONS}
             />
           </Box>
           <Box className={styles.textField}>
@@ -153,17 +173,64 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
             />
           </Box>
           <h3>Social Media</h3>
-          <Box sx={{display: "flex", flexDirection: "column", gap: "16px", width: "100%", alignItems: "center"}}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              width: "100%",
+              alignItems: "center",
+            }}
+          >
             {fields.map((field, index) => {
               return (
-                <Box sx={{display: "flex", flexDirection: 'row', justifyContent: 'space-between', gap: "10px", width: '100%'}}>
-                  <ControlledSelect name={`socialMedia.${index}.label`} control={control} fullWidth={true} label="Social media name" size='small' options={socialMediaOptions}/>
-                  <Box sx={{width: '100%', marginRight: index === 0 ? "50px" : 0}}><ControlledTextField name={`socialMedia.${index}.url`} control={control} fullWidth={true} label="Url address" size='small'/></Box>
-                  {index > 0 && <IconButton onClick={() => remove(index)}><DeleteIcon /></IconButton>}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    gap: "10px",
+                    width: "100%",
+                  }}
+                >
+                  <ControlledSelect
+                    name={`socialMedia.${index}.label`}
+                    control={control}
+                    fullWidth={true}
+                    label="Social media name"
+                    size="small"
+                    options={SOCIAL_MEDIA_OPTIONS}
+                  />
+                  <Box
+                    sx={{
+                      width: "100%",
+                      marginRight: index === 0 ? "50px" : 0,
+                    }}
+                  >
+                    <ControlledTextField
+                      name={`socialMedia.${index}.url`}
+                      control={control}
+                      fullWidth={true}
+                      label="Url address"
+                      size="small"
+                    />
+                  </Box>
+                  {index > 0 && (
+                    <IconButton onClick={() => remove(index)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </Box>
-              )
+              );
             })}
-            <Button variant="outlined" size="small" onClick={() => append({label: '', url: ''})} sx={{maxWidth: "150px"}}>Add Social Media</Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => append({ label: "", url: "" })}
+              sx={{ maxWidth: "150px" }}
+            >
+              Add Social Media
+            </Button>
           </Box>
           <Box
             sx={{
@@ -178,7 +245,7 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
             <Button
               sx={{ margin: "10px" }}
               variant="outlined"
-              onClick={handleClose}
+              onClick={onFormClose}
             >
               Close
             </Button>

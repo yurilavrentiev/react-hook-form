@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from "@mui/material";
 import { FormValues } from "components/Form/Form";
 import React from "react";
 import { Control, Controller } from "react-hook-form";
@@ -22,8 +22,8 @@ export const ControlledSelect = ({ name, control, label, options, size, fullWidt
     <Controller 
       name={name}
       control={control}
-      render={({field: {value, onChange, onBlur}}) => (
-      <FormControl fullWidth={fullWidth}>
+      render={({field: {value, onChange, onBlur}, fieldState: {error}}) => (
+      <FormControl fullWidth={fullWidth} error={Boolean(error)}>
       <InputLabel id="gender-label">{label}</InputLabel>
       <Select 
             labelId="gender-label" 
@@ -37,6 +37,7 @@ export const ControlledSelect = ({ name, control, label, options, size, fullWidt
               <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem> 
             ))}
           </Select>
+          {error && <FormHelperText>{error.message}</FormHelperText>}
     </FormControl>
     )}/>
   );

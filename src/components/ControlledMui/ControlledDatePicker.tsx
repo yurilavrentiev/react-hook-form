@@ -5,6 +5,9 @@ import { Control, Controller } from "react-hook-form";
 import dayjs from "dayjs";
 import { FormValues } from "components/Form/Form";
 import styles from './styles.module.css'
+import { FormControl, FormHelperText } from "@mui/material";
+
+
 
 interface ControlledDatePickerProps {
   name: any;
@@ -17,11 +20,15 @@ export const ControlledDatePicker = ( { name, label, control }: ControlledDatePi
     <Controller
       name={name}
       control={control}
-      render={({ field: {onChange, value}}) => (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker label={label} value={value ? value : null} onChange={onChange} className={styles.datePicker}/>
+      render={({ field: {onChange, value}, fieldState: { error }}) => {
+        console.log("error", error)
+       return (<LocalizationProvider dateAdapter={AdapterDayjs}>
+          <FormControl fullWidth error={Boolean(error)}>
+          <DatePicker label={label} value={value ? dayjs(value).toString() : null} onChange={(value) => onChange(dayjs(value).toISOString())} className={styles.datePicker} />
+          {error && <FormHelperText>{error.message}</FormHelperText>}
+          </FormControl>
         </LocalizationProvider>
-      )}
+  )}}
     />
   );
 };
