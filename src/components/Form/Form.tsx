@@ -1,16 +1,18 @@
-import { Box, Button, IconButton, Modal, Typography } from "@mui/material";
-import { Close } from "@mui/icons-material";
-import DeleteIcon from "@mui/icons-material/Delete";
 import React from "react";
-import styles from "./Form.module.css";
 import { useFieldArray, useForm } from "react-hook-form";
-import { ControlledTextField } from "components/ControlledMui/ControledTextField";
-import { ControlledSelect } from "components/ControlledMui/ControlledSelect";
-import { ControlledDatePicker } from "components/ControlledMui/ControlledDatePicker";
+import { Box, Button, IconButton, Modal, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Close } from "@mui/icons-material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import styles from "./Form.module.css";
+import { ControlledTextField } from "components/ControlledMui/ControledTextField";
+import { ControlledSelect } from "components/ControlledMui/ControlledSelect";
+import { ControlledDatePicker } from "components/ControlledMui/ControlledDatePicker";
 import { GENDER_OPTIONS, SOCIAL_MEDIA_OPTIONS } from "constants/constants";
+import { DateOfBirthSchema, PasswordSchema, SocialMediaSchema } from "zod/validationSchemas";
+import { isLoginUnique } from "helpers/helpers";
 
 export type FormValues = {
   login: string;
@@ -20,33 +22,6 @@ export type FormValues = {
   birthDate: Date | null | string;
   socialMedia: { label: string; url: string }[];
 };
-
-const SocialMediaSchema = z.array(
-  z.object({
-    label: z.string().min(1, {message: 'Please select social media name'}),
-    url: z.string().url({message: "Should be valid url link"})
-  })
-);
-
-const isLoginUnique = (login: string, users: FormValues[]) => {
-  return !users.some(user => user.login === login);
-}
-const DateOfBirthSchema = z.string().refine((value) => {
-  const today = new Date();
-  const birthDate = new Date(value);
-  const age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    return (age -1) > 18;
-  }
-  return age > 18;
-}, {message: "You must be at leat 18 years old"})
-
-const PasswordSchema = z.string()
-.min(5, {message: "Password should be at least 5 digits"})
-.regex(/[A-Z]/, {message: "Should be at least 1 digit in uppercase"})
-.regex(/[0-9]/, {message: "Should be at least 1 number"})
-
 
 export const Form = ({ open, handleClose, users, setUsers }: any) => {
 
@@ -81,6 +56,7 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
   });
   
   const onSubmit = (data: any) => {
+
     const preparedData = {
       login: data.login,
       email: data.email,
@@ -89,8 +65,6 @@ export const Form = ({ open, handleClose, users, setUsers }: any) => {
       birthDate: dayjs(data.birthDate),
       socialMedia: [...data.socialMedia],
     };
-    console.log("data", data);
-    console.log("preparedData", preparedData);
 
     const updatedUsers = [...users, preparedData];
 
