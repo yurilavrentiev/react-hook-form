@@ -1,4 +1,11 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import React from "react";
 
 interface ConfirmDialogProps {
@@ -8,8 +15,12 @@ interface ConfirmDialogProps {
   deleteUser: (login: string) => void;
 }
 
-export const ConfirmDialog = ({open, setOpen, deleteUser, userToDelete} : ConfirmDialogProps) => {
-
+export const ConfirmDialog = ({
+  open,
+  setOpen,
+  deleteUser,
+  userToDelete,
+}: ConfirmDialogProps) => {
   const customDialogStyle = {
     backgroundColor: "white",
     borderRadius: "8px",
@@ -17,45 +28,43 @@ export const ConfirmDialog = ({open, setOpen, deleteUser, userToDelete} : Confir
   };
 
   const handleDialogClose = () => {
-    setOpen(false)
+    setOpen(false);
   };
 
   return (
     <Dialog
-                  open={open}
-                  onClose={() => setOpen(false)}
-                  PaperProps={{ style: customDialogStyle}}
-                  sx={{
-                    "& .MuiBackdrop-root": {
-                      backgroundColor: "transparent",
-                      backdropFilter: "blur(5px)",
-                    },
-                  }}
-                  aria-labelledby="alert-dialog-title"
-                  aria-describedby="alert-dialog-description"
-                >
-                  <DialogTitle id="alert-dialog-title">
-                    Confirm alert
-                  </DialogTitle>
-                  <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                      Are you sure, you want to delete user?
-                    </DialogContentText>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        deleteUser(userToDelete);
-                        setOpen(false);
-                      }}
-                    >
-                      Confirm
-                    </Button>
-                    <Button variant="outlined" onClick={handleDialogClose}>
-                      Cancel
-                    </Button>
-                  </DialogActions>
-                </Dialog>
-  )
+      open={open}
+      onClose={() => setOpen(false)}
+      PaperProps={{ style: customDialogStyle }}
+      sx={{
+        "& .MuiBackdrop-root": {
+          backgroundColor: "transparent",
+          backdropFilter: "blur(5px)",
+        },
+      }}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">Confirm alert</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          Are you sure, you want to delete user?
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          variant="contained"
+          onClick={() => {
+            deleteUser(userToDelete);
+            setOpen(false);
+          }}
+        >
+          Confirm
+        </Button>
+        <Button variant="outlined" onClick={handleDialogClose}>
+          Cancel
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
 };
